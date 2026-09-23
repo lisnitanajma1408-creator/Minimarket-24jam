@@ -26,7 +26,7 @@
     </section>
 
     {{-- TENTANG KAMI --}}
-    <section class="about-section">
+    <section class="about-section" id="tentang-kami">
         <div class="site-container about-grid">
             <img src="{{ asset('images/toko-suasana.jpg') }}" alt="Suasana Toko" class="about-image">
             <div>

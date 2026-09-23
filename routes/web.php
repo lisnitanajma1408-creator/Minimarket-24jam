@@ -8,6 +8,9 @@ use App\Http\Controllers\HomeController;
 use App\Http\Controllers\ProductCatalogController;
 use App\Http\Controllers\CartController;
 use App\Http\Controllers\CheckoutController;
+use App\Http\Controllers\ReviewController;
+use App\Http\Controllers\LocationController;
+use App\Http\Controllers\ContactController;
 
 /*
 |--------------------------------------------------------------------------
@@ -32,6 +35,16 @@ Route::delete('/keranjang/{product}/hapus', [CartController::class, 'remove'])->
 Route::get('/checkout', [CheckoutController::class, 'index'])->name('checkout.index');
 Route::post('/checkout', [CheckoutController::class, 'store'])->name('checkout.store');
 Route::get('/checkout/success/{orderNumber}', [CheckoutController::class, 'success'])->name('checkout.success');
+
+Route::get('/ulasan', [ReviewController::class, 'index'])->name('ulasan');
+Route::post('/ulasan', [ReviewController::class, 'store'])->name('ulasan.store');
+
+Route::get('/lokasi', [LocationController::class, 'index'])->name('lokasi');
+
+Route::get('/kontak', [ContactController::class, 'index'])->name('kontak');
+Route::post('/kontak', [ContactController::class, 'store'])->name('kontak.store');
+
+Route::view('/keunggulan', 'keunggulan')->name('keunggulan');
 
 Route::get('/dashboard', function () {
     return view('dashboard');

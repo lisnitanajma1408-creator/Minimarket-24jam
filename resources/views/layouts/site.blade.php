@@ -14,15 +14,15 @@
             <a href="{{ route('home') }}" class="site-logo">Minimarket 24 Jam</a>
 
             <nav class="site-nav">
-                <a href="{{ route('home') }}" class="{{ request()->routeIs('home') ? 'active' : '' }}">Beranda</a>
-                <a href="#">Tentang Kami</a>
-                <a href="#">Katalog</a>
-                <a href="#">Keunggulan</a>
-                <a href="#">Ulasan</a>
-                <a href="#">Lokasi</a>
+                 <a href="{{ route('home') }}" class="{{ request()->routeIs('home') ? 'active' : '' }}">Beranda</a>
+                 <a href="{{ route('home') }}#tentang-kami">Tentang Kami</a>
+                 <a href="{{ route('katalog') }}" class="{{ request()->routeIs('katalog') ? 'active' : '' }}">Katalog</a>
+                 <a href="{{ route('keunggulan') }}" class="{{ request()->routeIs('keunggulan') ? 'active' : '' }}">Keunggulan</a>
+                 <a href="{{ route('ulasan') }}" class="{{ request()->routeIs('ulasan') ? 'active' : '' }}">Ulasan</a>
+                 <a href="{{ route('lokasi') }}" class="{{ request()->routeIs('lokasi') ? 'active' : '' }}">Lokasi</a>
             </nav>
 
-            <a href="#" class="btn-primary-nav">Hubungi Kami</a>
+            <a href="{{ route('kontak') }}" class="btn-primary-nav">Hubungi Kami</a>
         </div>
     </header>
 
