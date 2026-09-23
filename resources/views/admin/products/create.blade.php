@@ -25,13 +25,16 @@
             @csrf
 
             <label class="form-label">Foto Produk</label>
-            <div class="upload-box">
-                <input type="file" name="image" id="image" accept="image/*">
-                <label for="image" class="upload-label">
+            <div class="upload-box" id="upload-box" style="position:relative; display:flex; align-items:center; justify-content:center; overflow:hidden;">
+                <input type="file" name="image" id="image" accept="image/*"
+                       style="position:absolute; inset:0; width:100%; height:100%; opacity:0; cursor:pointer;">
+                <label for="image" class="upload-label" id="upload-label">
                     <span class="upload-icon">⬆️</span>
-                    <span>Click to upload or drag and drop</span>
+                    <span id="upload-text">Click to upload or drag and drop</span>
                     <span class="upload-hint">SVG, PNG, JPG or GIF (max. 800×400px)</span>
                 </label>
+                <img id="preview-image" src="" alt="Preview"
+                     style="display:none; max-width:100%; max-height:100%; width:auto; height:auto; object-fit:contain; border-radius:8px;">
             </div>
 
             <div class="form-grid">
@@ -84,4 +87,48 @@
             </div>
         </form>
     </div>
+
+    <script>
+        const uploadBox = document.getElementById('upload-box');
+        const fileInput = document.getElementById('image');
+        const uploadText = document.getElementById('upload-text');
+        const previewImage = document.getElementById('preview-image');
+
+        function showPreview(file) {
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function (e) {
+                previewImage.src = e.target.result;
+                previewImage.style.display = 'block';
+                document.getElementById('upload-label').style.display = 'none';
+            };
+            reader.readAsDataURL(file);
+        }
+
+        fileInput.addEventListener('change', function () {
+            if (this.files && this.files[0]) {
+                showPreview(this.files[0]);
+            }
+        });
+
+        uploadBox.addEventListener('dragover', function (e) {
+            e.preventDefault();
+            uploadBox.style.borderColor = '#4f46e5';
+        });
+
+        uploadBox.addEventListener('dragleave', function (e) {
+            e.preventDefault();
+            uploadBox.style.borderColor = '';
+        });
+
+        uploadBox.addEventListener('drop', function (e) {
+            e.preventDefault();
+            uploadBox.style.borderColor = '';
+            const file = e.dataTransfer.files[0];
+            if (file) {
+                fileInput.files = e.dataTransfer.files;
+                showPreview(file);
+            }
+        });
+    </script>
 @endsection

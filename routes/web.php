@@ -8,6 +8,8 @@ use App\Http\Controllers\HomeController;
 use App\Http\Controllers\ProductCatalogController;
 use App\Http\Controllers\CartController;
 use App\Http\Controllers\CheckoutController;
+use App\Http\Controllers\Admin\SuppliersController;
+use App\Http\Controllers\Admin\InventoryController;
 
 /*
 |--------------------------------------------------------------------------
@@ -54,6 +56,16 @@ Route::middleware(['auth', 'role:admin,kasir'])
         Route::get('/products/{product}/edit', [ProductController::class, 'edit'])->name('products.edit');
         Route::put('/products/{product}', [ProductController::class, 'update'])->name('products.update');
         Route::delete('/products/{product}', [ProductController::class, 'destroy'])->name('products.destroy');
-    });
+
+        Route::get('/inventory', [InventoryController::class, 'index'])->name('inventory.index');
+        Route::post('/inventory/{product}/adjust', [InventoryController::class, 'adjust'])->name('inventory.adjust');
+
+        Route::get('/suppliers', [SuppliersController::class, 'index'])->name('suppliers.index');
+        Route::get('/suppliers/create', [SuppliersController::class, 'create'])->name('suppliers.create');
+        Route::post('/suppliers', [SuppliersController::class, 'store'])->name('suppliers.store');
+        Route::get('/suppliers/{supplier}/edit', [SuppliersController::class, 'edit'])->name('suppliers.edit');
+        Route::put('/suppliers/{supplier}', [SuppliersController::class, 'update'])->name('suppliers.update');
+        Route::delete('/suppliers/{supplier}', [SuppliersController::class, 'destroy'])->name('suppliers.destroy');
+        });
 
 require __DIR__.'/auth.php';

@@ -32,8 +32,14 @@
                    class="{{ request()->routeIs('admin.products.*') ? 'active' : '' }}">
                     Daftar Produk
                 </a>
-                <a href="#">Inventaris</a>
-                <a href="#">Pemasok</a>
+                <a href="{{ route('admin.inventory.index') }}"
+                   class="{{ request()->routeIs('admin.inventory.*') ? 'active' : '' }}">
+                    Inventaris
+                </a>
+                <a href="{{ route('admin.suppliers.index') }}"
+                   class="{{ request()->routeIs('admin.suppliers.*') ? 'active' : '' }}">
+                    Pemasok
+                </a>
             </nav>
 
             <div class="sidebar-footer">

@@ -15,14 +15,14 @@
 
             <nav class="site-nav">
                 <a href="{{ route('home') }}" class="{{ request()->routeIs('home') ? 'active' : '' }}">Beranda</a>
-                <a href="#">Tentang Kami</a>
-                <a href="#">Katalog</a>
-                <a href="#">Keunggulan</a>
-                <a href="#">Ulasan</a>
-                <a href="#">Lokasi</a>
+                <a href="{{ route('home') }}#tentang-kami">Tentang Kami</a>
+                <a href="{{ route('katalog') }}" class="{{ request()->routeIs('katalog') ? 'active' : '' }}">Katalog</a>
+                <a href="{{ route('home') }}#keunggulan">Keunggulan</a>
+                <a href="{{ route('home') }}#ulasan">Ulasan</a>
+                <a href="{{ route('home') }}#lokasi">Lokasi</a>
             </nav>
 
-            <a href="#" class="btn-primary-nav">Hubungi Kami</a>
+            <a href="#lokasi" class="btn-primary-nav">Hubungi Kami</a>
         </div>
     </header>
 
