@@ -60,7 +60,7 @@
 
                 <div class="cart-actions">
                     <a href="{{ route('katalog') }}" class="btn-outline-nav">Tambah Belanja</a>
-                    <a href="#" class="btn-primary-nav">Beli Sekarang</a>
+                    <a href="{{ route('checkout.index') }}" class="btn-primary-nav">Beli Sekarang</a>
                 </div>
             </div>
         @else

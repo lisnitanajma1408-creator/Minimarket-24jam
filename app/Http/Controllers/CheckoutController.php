@@ -103,7 +103,6 @@ class CheckoutController extends Controller
             ]);
         }
 
-        // Kirim email ke semua admin
         $adminEmails = User::where('role', 'admin')->pluck('email');
         foreach ($adminEmails as $email) {
             Mail::to($email)->send(new NewOrderNotification($order));
@@ -111,7 +110,17 @@ class CheckoutController extends Controller
 
         session()->forget('cart');
 
+        if ($order->payment_method === 'qris') {
+            return redirect()->route('checkout.qris', $order->order_number);
+        }
+
         return redirect()->route('checkout.success', $order->order_number);
+    }
+
+    public function qris($orderNumber)
+    {
+        $order = StoreOrder::where('order_number', $orderNumber)->firstOrFail();
+        return view('checkout-qris', compact('order'));
     }
 
     public function success($orderNumber)

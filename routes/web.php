@@ -10,6 +10,9 @@ use App\Http\Controllers\CartController;
 use App\Http\Controllers\CheckoutController;
 use App\Http\Controllers\Admin\SuppliersController;
 use App\Http\Controllers\Admin\InventoryController;
+use App\Http\Controllers\ReviewController;
+use App\Http\Controllers\LocationController;
+use App\Http\Controllers\ContactController;
 
 /*
 |--------------------------------------------------------------------------
@@ -33,7 +36,18 @@ Route::delete('/keranjang/{product}/hapus', [CartController::class, 'remove'])->
 
 Route::get('/checkout', [CheckoutController::class, 'index'])->name('checkout.index');
 Route::post('/checkout', [CheckoutController::class, 'store'])->name('checkout.store');
+Route::get('/checkout/qris/{orderNumber}', [CheckoutController::class, 'qris'])->name('checkout.qris');
 Route::get('/checkout/success/{orderNumber}', [CheckoutController::class, 'success'])->name('checkout.success');
+
+Route::get('/ulasan', [ReviewController::class, 'index'])->name('ulasan');
+Route::post('/ulasan', [ReviewController::class, 'store'])->name('ulasan.store');
+
+Route::get('/lokasi', [LocationController::class, 'index'])->name('lokasi');
+
+Route::get('/kontak', [ContactController::class, 'index'])->name('kontak');
+Route::post('/kontak', [ContactController::class, 'store'])->name('kontak.store');
+
+Route::view('/keunggulan', 'keunggulan')->name('keunggulan');
 
 Route::get('/dashboard', function () {
     return view('dashboard');
@@ -66,6 +80,6 @@ Route::middleware(['auth', 'role:admin,kasir'])
         Route::get('/suppliers/{supplier}/edit', [SuppliersController::class, 'edit'])->name('suppliers.edit');
         Route::put('/suppliers/{supplier}', [SuppliersController::class, 'update'])->name('suppliers.update');
         Route::delete('/suppliers/{supplier}', [SuppliersController::class, 'destroy'])->name('suppliers.destroy');
-        });
+    });
 
 require __DIR__.'/auth.php';
