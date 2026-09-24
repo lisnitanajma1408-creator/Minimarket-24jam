@@ -32,4 +32,14 @@ class ProductCatalogController extends Controller
 
         return view('katalog', compact('products', 'categories', 'activeCategory'));
     }
+
+    public function show(Product $product)
+    {
+        $relatedProducts = Product::where('category_id', $product->category_id)
+            ->where('id', '!=', $product->id)
+            ->take(4)
+            ->get();
+
+        return view('produk-detail', compact('product', 'relatedProducts'));
+    }
 }

@@ -28,6 +28,7 @@ use App\Http\Controllers\ContactController;
 Route::get('/', [HomeController::class, 'index'])->name('home');
 
 Route::get('/katalog', [ProductCatalogController::class, 'index'])->name('katalog');
+Route::get('/produk/{product}', [ProductCatalogController::class, 'show'])->name('produk.show');
 
 Route::get('/keranjang', [CartController::class, 'index'])->name('cart.index');
 Route::post('/keranjang/{product}/tambah', [CartController::class, 'add'])->name('cart.add');
@@ -37,6 +38,7 @@ Route::delete('/keranjang/{product}/hapus', [CartController::class, 'remove'])->
 Route::get('/checkout', [CheckoutController::class, 'index'])->name('checkout.index');
 Route::post('/checkout', [CheckoutController::class, 'store'])->name('checkout.store');
 Route::get('/checkout/qris/{orderNumber}', [CheckoutController::class, 'qris'])->name('checkout.qris');
+Route::post('/checkout/qris/{orderNumber}/confirm', [CheckoutController::class, 'confirmPayment'])->name('checkout.confirm');
 Route::get('/checkout/success/{orderNumber}', [CheckoutController::class, 'success'])->name('checkout.success');
 
 Route::get('/ulasan', [ReviewController::class, 'index'])->name('ulasan');

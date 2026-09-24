@@ -7,6 +7,8 @@ use App\Models\StoreOrder;
 use App\Models\OrderItem;
 use App\Models\User;
 use App\Mail\NewOrderNotification;
+use App\Mail\OrderReceipt;
+use App\Mail\PaymentConfirmed;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
@@ -89,6 +91,7 @@ class CheckoutController extends Controller
             'shipping_cost' => $shippingCost,
             'total' => $total,
             'status' => 'pending',
+            'payment_deadline' => $validated['payment_method'] === 'qris' ? now()->addMinutes(30) : null,
             'send_receipt_email' => $request->has('send_receipt_email'),
         ]);
 
@@ -108,6 +111,10 @@ class CheckoutController extends Controller
             Mail::to($email)->send(new NewOrderNotification($order));
         }
 
+        if ($order->send_receipt_email) {
+            Mail::to($order->customer_email)->send(new OrderReceipt($order));
+        }
+
         session()->forget('cart');
 
         if ($order->payment_method === 'qris') {
@@ -121,6 +128,28 @@ class CheckoutController extends Controller
     {
         $order = StoreOrder::where('order_number', $orderNumber)->firstOrFail();
         return view('checkout-qris', compact('order'));
+    }
+
+    public function confirmPayment(Request $request, $orderNumber)
+    {
+        $order = StoreOrder::where('order_number', $orderNumber)->firstOrFail();
+
+        $request->validate([
+            'payment_reference' => 'required|string|max:255',
+        ]);
+
+        $order->update([
+            'payment_reference' => $request->payment_reference,
+            'status' => 'menunggu_verifikasi',
+        ]);
+
+        $adminEmails = User::where('role', 'admin')->pluck('email');
+        foreach ($adminEmails as $email) {
+            Mail::to($email)->send(new NewOrderNotification($order));
+        }
+
+        return redirect()->route('checkout.success', $order->order_number)
+            ->with('success', 'Terima kasih! Pembayaran kamu sedang kami verifikasi.');
     }
 
     public function success($orderNumber)

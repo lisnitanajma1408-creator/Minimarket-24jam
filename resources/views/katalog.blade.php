@@ -42,15 +42,19 @@
             <div class="katalog-grid">
                 @forelse($products as $product)
                     <div class="product-card">
-                        <div class="product-image">
-                            @if($product->image)
-                                <img src="{{ asset('storage/' . $product->image) }}" alt="{{ $product->name }}">
-                            @else
-                                <div class="product-image-placeholder">{{ $product->name }}</div>
-                            @endif
-                        </div>
+                        <a href="{{ route('produk.show', $product) }}" style="text-decoration:none; color:inherit;">
+                            <div class="product-image">
+                                @if($product->image)
+                                    <img src="{{ asset('storage/' . $product->image) }}" alt="{{ $product->name }}">
+                                @else
+                                    <div class="product-image-placeholder">{{ $product->name }}</div>
+                                @endif
+                            </div>
+                        </a>
                         <div class="product-info">
-                            <h4>{{ $product->name }}</h4>
+                            <a href="{{ route('produk.show', $product) }}" style="text-decoration:none; color:inherit;">
+                                <h4>{{ $product->name }}</h4>
+                            </a>
                             <span class="product-unit">{{ $product->unit ?? '-' }}</span>
                             <div class="product-price-row">
                                 <span class="product-price">{{ $product->formatted_price }}</span>
