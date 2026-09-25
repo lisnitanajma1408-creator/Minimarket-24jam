@@ -1,43 +1,59 @@
 @extends('layouts.admin')
 
+@section('title', 'Daftar Pemasok')
+
 @section('content')
-<h1>Daftar Pemasok</h1>
+    <div class="page-header">
+        <div>
+            <h2>Daftar Pemasok</h2>
+            <p class="page-subtitle">Kelola data pemasok dan kontak mereka.</p>
+        </div>
+        <a href="{{ route('admin.suppliers.create') }}" class="btn-primary" style="text-decoration:none; display:inline-flex; align-items:center;">
+            + Tambah Pemasok
+        </a>
+    </div>
 
-@if(session('success'))
-    <div style="padding:10px; background:#d1fae5; margin-bottom:15px;">{{ session('success') }}</div>
-@endif
+    @if(session('success'))
+        <div class="alert-success">{{ session('success') }}</div>
+    @endif
 
-<a href="{{ route('admin.suppliers.create') }}">+ Tambah Pemasok</a>
+    <div class="panel">
+        <table class="product-table">
+            <thead>
+                <tr>
+                    <th>Nama</th>
+                    <th>Kontak</th>
+                    <th>Telepon</th>
+                    <th>Email</th>
+                    <th>Aksi</th>
+                </tr>
+            </thead>
+            <tbody>
+                @forelse($suppliers as $supplier)
+                    <tr>
+                        <td>{{ $supplier->name }}</td>
+                        <td>{{ $supplier->contact_person ?? '-' }}</td>
+                        <td>{{ $supplier->phone ?? '-' }}</td>
+                        <td>{{ $supplier->email ?? '-' }}</td>
+                        <td>
+                            <a href="{{ route('admin.suppliers.edit', $supplier) }}">Edit</a>
+                            <form action="{{ route('admin.suppliers.destroy', $supplier) }}" method="POST" style="display:inline;" onsubmit="return confirm('Yakin hapus?')">
+                                @csrf
+                                @method('DELETE')
+                                <button type="submit" class="btn-link-danger">Hapus</button>
+                            </form>
+                        </td>
+                    </tr>
+                @empty
+                    <tr>
+                        <td colspan="5" class="text-center">Belum ada pemasok.</td>
+                    </tr>
+                @endforelse
+            </tbody>
+        </table>
+    </div>
 
-<table border="1" cellpadding="8" style="width:100%; border-collapse:collapse; margin-top:15px;">
-    <thead>
-        <tr>
-            <th>Nama</th>
-            <th>Kontak</th>
-            <th>Telepon</th>
-            <th>Email</th>
-            <th>Aksi</th>
-        </tr>
-    </thead>
-    <tbody>
-        @foreach($suppliers as $supplier)
-        <tr>
-            <td>{{ $supplier->name }}</td>
-            <td>{{ $supplier->contact_person ?? '-' }}</td>
-            <td>{{ $supplier->phone ?? '-' }}</td>
-            <td>{{ $supplier->email ?? '-' }}</td>
-            <td>
-                <a href="{{ route('admin.suppliers.edit', $supplier) }}">Edit</a>
-                <form action="{{ route('admin.suppliers.destroy', $supplier) }}" method="POST" style="display:inline;" onsubmit="return confirm('Yakin hapus?')">
-                    @csrf
-                    @method('DELETE')
-                    <button type="submit">Hapus</button>
-                </form>
-            </td>
-        </tr>
-        @endforeach
-    </tbody>
-</table>
-
-{{ $suppliers->links() }}
+    <div class="pagination-wrap">
+        {{ $suppliers->links() }}
+    </div>
 @endsection
