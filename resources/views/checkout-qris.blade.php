@@ -15,23 +15,52 @@
             Total Pembayaran: <strong>Rp {{ number_format($order->total, 0, ',', '.') }}</strong>
         </p>
 
+        @if(session('success'))
+            <div class="alert-success text-center" style="max-width:500px; margin:20px auto;">
+                {{ session('success') }}
+            </div>
+        @endif
+
         @if($order->status === 'pending')
             <p class="text-center" style="color:#b45309;">
                 Batas waktu pembayaran: {{ $order->payment_deadline->format('H:i') }} ({{ $order->payment_deadline->diffForHumans() }})
             </p>
 
-            <form method="POST" action="{{ route('checkout.confirm', $order->order_number) }}" style="max-width:400px; margin:0 auto;">
+            @if($errors->any())
+                <p class="text-center" style="color:#b91c1c;">{{ $errors->first() }}</p>
+            @endif
+
+            <form method="POST" action="{{ route('checkout.confirm', $order->order_number) }}"
+                  enctype="multipart/form-data" style="max-width:400px; margin:0 auto;">
                 @csrf
-                <label class="form-label">Nomor Referensi / Bukti Transfer *</label>
-                <input type="text" name="payment_reference" placeholder="cth. TRX123456789" required
-                       style="width:100%; padding:10px; margin-bottom:12px;">
+                <label class="form-label">Upload Screenshot Bukti Pembayaran *</label>
+                <input type="file" name="payment_proof" id="proof" accept="image/*" required
+                       style="width:100%; padding:12px; margin-bottom:12px; border:2px dashed #cbd5e1; border-radius:12px; background:#f8fafc;">
+                <img id="proof-preview" alt="Preview bukti"
+                     style="display:none; max-width:100%; max-height:260px; margin:0 auto 12px; border-radius:12px;">
                 <button type="submit" class="btn-primary-nav" style="width:100%;">
                     Konfirmasi Sudah Bayar
                 </button>
             </form>
+
+            <script>
+                document.getElementById('proof').addEventListener('change', function (e) {
+                    const file = e.target.files[0];
+                    const img = document.getElementById('proof-preview');
+                    if (file) {
+                        img.src = URL.createObjectURL(file);
+                        img.style.display = 'block';
+                    }
+                });
+            </script>
         @elseif($order->status === 'menunggu_verifikasi')
             <div class="alert-success text-center" style="max-width:500px; margin:20px auto;">
-                Pembayaran kamu sedang diverifikasi oleh admin. Nomor referensi: {{ $order->payment_reference }}
+                Bukti pembayaran kamu sudah terkirim dan sedang diverifikasi oleh admin.
+                @if($order->payment_proof)
+                    <br>
+                    <img src="{{ asset('storage/' . $order->payment_proof) }}" alt="Bukti pembayaran"
+                         style="max-width:200px; margin-top:10px; border-radius:10px;">
+                @endif
             </div>
         @elseif($order->status === 'selesai')
             <div class="alert-success text-center" style="max-width:500px; margin:20px auto;">

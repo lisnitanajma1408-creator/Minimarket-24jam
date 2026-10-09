@@ -10,6 +10,7 @@ use App\Mail\NewOrderNotification;
 use App\Mail\OrderReceipt;
 use App\Mail\PaymentConfirmed;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
 
@@ -135,21 +136,30 @@ class CheckoutController extends Controller
         $order = StoreOrder::where('order_number', $orderNumber)->firstOrFail();
 
         $request->validate([
-            'payment_reference' => 'required|string|max:255',
+            'payment_proof' => 'required|image|mimes:jpg,jpeg,png,webp|max:4096',
+        ], [
+            'payment_proof.required' => 'Upload screenshot bukti pembayaran dulu.',
+            'payment_proof.image'    => 'File harus berupa gambar.',
+            'payment_proof.mimes'    => 'Format gambar harus jpg, jpeg, png, atau webp.',
+            'payment_proof.max'      => 'Ukuran gambar maksimal 4 MB.',
         ]);
 
         $order->update([
-            'payment_reference' => $request->payment_reference,
+            'payment_proof' => $request->file('payment_proof')->store('payment-proofs', 'public'),
             'status' => 'menunggu_verifikasi',
         ]);
 
-        $adminEmails = User::where('role', 'admin')->pluck('email');
-        foreach ($adminEmails as $email) {
-            Mail::to($email)->send(new NewOrderNotification($order));
+        try {
+            $adminEmails = User::where('role', 'admin')->pluck('email');
+            foreach ($adminEmails as $email) {
+                Mail::to($email)->send(new NewOrderNotification($order));
+            }
+        } catch (\Throwable $e) {
+            Log::warning('Email notifikasi admin gagal: ' . $e->getMessage());
         }
 
         return redirect()->route('checkout.success', $order->order_number)
-            ->with('success', 'Terima kasih! Pembayaran kamu sedang kami verifikasi.');
+            ->with('success', 'Terima kasih! Bukti pembayaran kamu sedang kami verifikasi.');
     }
 
     public function success($orderNumber)
