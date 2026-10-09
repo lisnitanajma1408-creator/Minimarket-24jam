@@ -62,7 +62,7 @@
                             <input type="radio" name="shipping_method" value="ojek_online" checked>
                             <strong>Di ambil lewat Ojek Online</strong>
                             <span>Ambil hari ini</span>
-                            <span class="option-price">Gratis</span>
+                            <span class="option-price">Ongkir dibayar langsung ke driver lewat aplikasi ojek online</span>
                         </label>
                         <label class="option-card">
                             <input type="radio" name="shipping_method" value="ambil_toko">
@@ -111,10 +111,13 @@
                     <span>Subtotal</span>
                     <span>{{ 'Rp' . number_format($subtotal, 0, ',', '.') }}</span>
                 </div>
-                <div class="summary-item-row">
-                    <span>Ongkos Kirim</span>
-                    <span>{{ 'Rp' . number_format($shippingCost, 0, ',', '.') }}</span>
-                </div>
+
+                @if($shippingCost > 0)
+                    <div class="summary-item-row">
+                        <span>Ongkos Kirim</span>
+                        <span>{{ 'Rp' . number_format($shippingCost, 0, ',', '.') }}</span>
+                    </div>
+                @endif
 
                 <div class="summary-divider"></div>
 
@@ -122,7 +125,7 @@
                     <span>Total</span>
                     <strong>{{ 'Rp' . number_format($total, 0, ',', '.') }}</strong>
                 </div>
-                <p class="summary-note">Termasuk PPN jika berlaku</p>
+                <p class="summary-note">Ongkir ojek online dibayar terpisah ke driver.</p>
             </div>
 
         </div>

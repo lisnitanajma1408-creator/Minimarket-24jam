@@ -40,7 +40,7 @@ class CheckoutController extends Controller
             }
         }
 
-        $shippingCost = 15000;
+        $shippingCost = 0;
         $total = $subtotal + $shippingCost;
 
         return view('checkout', compact('items', 'subtotal', 'shippingCost', 'total'));
@@ -75,7 +75,7 @@ class CheckoutController extends Controller
             }
         }
 
-        $shippingCost = 15000;
+        $shippingCost = 0;
         $total = $subtotal + $shippingCost;
 
         $orderNumber = 'FM-' . date('Y') . '-' . str_pad(StoreOrder::count() + 1, 5, '0', STR_PAD_LEFT);
