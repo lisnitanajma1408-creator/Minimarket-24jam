@@ -10,19 +10,17 @@ use App\Http\Controllers\CartController;
 use App\Http\Controllers\CheckoutController;
 use App\Http\Controllers\Admin\SuppliersController;
 use App\Http\Controllers\Admin\InventoryController;
+use App\Http\Controllers\Admin\PaymentVerificationController;
 use App\Http\Controllers\ReviewController;
 use App\Http\Controllers\LocationController;
 use App\Http\Controllers\ContactController;
+// Aktifkan baris ini HANYA setelah InsightController dibuat (fitur AI):
+// use App\Http\Controllers\Admin\InsightController;
 
 /*
 |--------------------------------------------------------------------------
 | Web Routes
 |--------------------------------------------------------------------------
-|
-| Here is where you can register web routes for your application. These
-| routes are loaded by the RouteServiceProvider and all of them will
-| be assigned to the "web" middleware group. Make something great!
-|
 */
 
 Route::get('/', [HomeController::class, 'index'])->name('home');
@@ -82,6 +80,24 @@ Route::middleware(['auth', 'role:admin,kasir'])
         Route::get('/suppliers/{supplier}/edit', [SuppliersController::class, 'edit'])->name('suppliers.edit');
         Route::put('/suppliers/{supplier}', [SuppliersController::class, 'update'])->name('suppliers.update');
         Route::delete('/suppliers/{supplier}', [SuppliersController::class, 'destroy'])->name('suppliers.destroy');
+
+        // Verifikasi pembayaran & packing
+        Route::get('/payments', [PaymentVerificationController::class, 'index'])->name('payments.index');
+        Route::post('/payments/{order}/confirm', [PaymentVerificationController::class, 'confirm'])->name('payments.confirm');
+        Route::post('/payments/{order}/reject', [PaymentVerificationController::class, 'reject'])->name('payments.reject');
+        Route::post('/payments/{order}/fulfillment', [PaymentVerificationController::class, 'fulfillment'])->name('payments.fulfillment');
+        Route::post('/payments/{order}/accept-cod', [PaymentVerificationController::class, 'acceptCod'])->name('payments.acceptCod');
+        Route::post('/payments/{order}/reject-cod', [PaymentVerificationController::class, 'rejectCod'])->name('payments.rejectCod');
     });
+
+// Analisis AI (khusus admin). Aktifkan setelah InsightController dibuat
+// dan baris "use" InsightController di atas dibuka komentarnya.
+// Route::middleware(['auth', 'role:admin'])
+//     ->prefix('admin')
+//     ->name('admin.')
+//     ->group(function () {
+//         Route::get('/insights', [InsightController::class, 'index'])->name('insights.index');
+//         Route::post('/insights/ai-summary', [InsightController::class, 'aiSummary'])->name('insights.ai');
+//     });
 
 require __DIR__.'/auth.php';

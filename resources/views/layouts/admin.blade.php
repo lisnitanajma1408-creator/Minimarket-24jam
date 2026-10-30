@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>@yield('title', 'Admin') - Supermarket 24jam</title>
+    <title>@yield('title', 'Admin') - Minimarket 24 Jam</title>
     <link rel="stylesheet" href="{{ asset('css/admin.css') }}">
 </head>
 <body>
@@ -40,6 +40,18 @@
                    class="{{ request()->routeIs('admin.suppliers.*') ? 'active' : '' }}">
                     Pemasok
                 </a>
+                <a href="{{ route('admin.payments.index') }}"
+                   class="{{ request()->routeIs('admin.payments.*') ? 'active' : '' }}">
+                    Verifikasi & Packing
+                </a>
+
+                {{-- Muncul otomatis setelah fitur AI dipasang (route insights ada) --}}
+                @if(Route::has('admin.insights.index') && auth()->user()->role === 'admin')
+                    <a href="{{ route('admin.insights.index') }}"
+                       class="{{ request()->routeIs('admin.insights.*') ? 'active' : '' }}">
+                        Analisis AI
+                    </a>
+                @endif
             </nav>
 
             <div class="sidebar-footer">
@@ -54,7 +66,7 @@
         {{-- MAIN CONTENT --}}
         <div class="admin-main">
             <header class="admin-header">
-                <h1>Supermarket 24jam</h1>
+                <h1>Minimarket 24 Jam</h1>
             </header>
 
             <main class="admin-content">

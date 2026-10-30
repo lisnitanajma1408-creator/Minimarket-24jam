@@ -6,20 +6,21 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    /**
-     * Run the migrations.
-     */
     public function up(): void
-{
-    Schema::table('store_orders', function (Blueprint $table) {
-        $table->string('payment_proof')->nullable();
-    });
-}
-
-public function down(): void
     {
-    Schema::table('store_orders', function (Blueprint $table) {
-        $table->dropColumn('payment_proof');
-         });
+        if (!Schema::hasColumn('store_orders', 'payment_proof')) {
+            Schema::table('store_orders', function (Blueprint $table) {
+                $table->string('payment_proof')->nullable();
+            });
+        }
+    }
+
+    public function down(): void
+    {
+        if (Schema::hasColumn('store_orders', 'payment_proof')) {
+            Schema::table('store_orders', function (Blueprint $table) {
+                $table->dropColumn('payment_proof');
+            });
+        }
     }
 };

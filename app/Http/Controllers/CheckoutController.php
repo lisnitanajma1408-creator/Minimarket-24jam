@@ -8,11 +8,10 @@ use App\Models\OrderItem;
 use App\Models\User;
 use App\Mail\NewOrderNotification;
 use App\Mail\OrderReceipt;
-use App\Mail\PaymentConfirmed;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
-use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Storage;
 
 class CheckoutController extends Controller
 {
@@ -75,6 +74,10 @@ class CheckoutController extends Controller
             }
         }
 
+        if (empty($items)) {
+            return redirect()->route('cart.index')->with('error', 'Produk di keranjang sudah tidak tersedia.');
+        }
+
         $shippingCost = 0;
         $total = $subtotal + $shippingCost;
 
@@ -107,13 +110,22 @@ class CheckoutController extends Controller
             ]);
         }
 
-        $adminEmails = User::where('role', 'admin')->pluck('email');
-        foreach ($adminEmails as $email) {
-            Mail::to($email)->send(new NewOrderNotification($order));
+        // Email dibungkus try/catch: kalau SMTP gagal, checkout tetap lanjut.
+        try {
+            $adminEmails = User::where('role', 'admin')->pluck('email');
+            foreach ($adminEmails as $email) {
+                Mail::to($email)->send(new NewOrderNotification($order));
+            }
+        } catch (\Throwable $e) {
+            Log::warning('Email notifikasi admin gagal: ' . $e->getMessage());
         }
 
         if ($order->send_receipt_email) {
-            Mail::to($order->customer_email)->send(new OrderReceipt($order));
+            try {
+                Mail::to($order->customer_email)->send(new OrderReceipt($order));
+            } catch (\Throwable $e) {
+                Log::warning('Email nota ke customer gagal: ' . $e->getMessage());
+            }
         }
 
         session()->forget('cart');
@@ -127,13 +139,23 @@ class CheckoutController extends Controller
 
     public function qris($orderNumber)
     {
+        StoreOrder::expireOverdue();
+
         $order = StoreOrder::where('order_number', $orderNumber)->firstOrFail();
         return view('checkout-qris', compact('order'));
     }
 
     public function confirmPayment(Request $request, $orderNumber)
     {
+        StoreOrder::expireOverdue();
+
         $order = StoreOrder::where('order_number', $orderNumber)->firstOrFail();
+
+        // Hanya pesanan "pending" (belum upload / bukti ditolak) yang boleh upload.
+        if ($order->status !== 'pending') {
+            return redirect()->route('checkout.qris', $order->order_number)
+                ->withErrors(['payment_proof' => 'Pesanan ini sudah kedaluwarsa atau sedang diverifikasi.']);
+        }
 
         $request->validate([
             'payment_proof' => 'required|image|mimes:jpg,jpeg,png,webp|max:4096',
@@ -144,11 +166,17 @@ class CheckoutController extends Controller
             'payment_proof.max'      => 'Ukuran gambar maksimal 4 MB.',
         ]);
 
+        // Hapus bukti lama kalau customer upload ulang setelah ditolak admin.
+        if ($order->payment_proof) {
+            Storage::disk('public')->delete($order->payment_proof);
+        }
+
         $order->update([
             'payment_proof' => $request->file('payment_proof')->store('payment-proofs', 'public'),
             'status' => 'menunggu_verifikasi',
         ]);
 
+        // Beri tahu admin bahwa bukti baru masuk.
         try {
             $adminEmails = User::where('role', 'admin')->pluck('email');
             foreach ($adminEmails as $email) {
@@ -158,8 +186,9 @@ class CheckoutController extends Controller
             Log::warning('Email notifikasi admin gagal: ' . $e->getMessage());
         }
 
-        return redirect()->route('checkout.success', $order->order_number)
-            ->with('success', 'Terima kasih! Bukti pembayaran kamu sedang kami verifikasi.');
+        // Kembali ke halaman QRIS supaya countdown tetap terlihat.
+        return redirect()->route('checkout.qris', $order->order_number)
+            ->with('success', 'Bukti pembayaran terkirim. Admin akan segera memverifikasi.');
     }
 
     public function success($orderNumber)

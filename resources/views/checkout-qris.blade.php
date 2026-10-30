@@ -6,9 +6,11 @@
     <div class="site-container qris-wrap">
         <h1 class="text-center">Kode QRIS</h1>
 
-        <div class="qris-card">
-            <img src="{{ asset('images/Qriss.jpeg') }}" alt="Kode QRIS" class="qris-image">
-        </div>
+        @if(in_array($order->status, ['pending', 'menunggu_verifikasi']))
+            <div class="qris-card">
+                <img src="{{ asset('images/Qriss.jpeg') }}" alt="Kode QRIS" class="qris-image">
+            </div>
+        @endif
 
         <p class="text-center">
             Nomor Pesanan: <strong>{{ $order->order_number }}</strong><br>
@@ -16,20 +18,21 @@
         </p>
 
         @if(session('success'))
-            <div class="alert-success text-center" style="max-width:500px; margin:20px auto;">
-                {{ session('success') }}
+            <div class="alert-success text-center" style="max-width:500px; margin:20px auto;">{{ session('success') }}</div>
+        @endif
+
+        @if($errors->any())
+            <div class="alert-error text-center" style="max-width:500px; margin:20px auto;">{{ $errors->first() }}</div>
+        @endif
+
+        @if(in_array($order->status, ['pending', 'menunggu_verifikasi']) && $order->payment_deadline)
+            <div class="text-center" style="margin:16px 0;">
+                <div style="font-size:14px; color:#64748b;">Sisa waktu pembayaran</div>
+                <div id="countdown" style="font-size:38px; font-weight:800; color:#b45309; letter-spacing:2px;">--:--</div>
             </div>
         @endif
 
         @if($order->status === 'pending')
-            <p class="text-center" style="color:#b45309;">
-                Batas waktu pembayaran: {{ $order->payment_deadline->format('H:i') }} ({{ $order->payment_deadline->diffForHumans() }})
-            </p>
-
-            @if($errors->any())
-                <p class="text-center" style="color:#b91c1c;">{{ $errors->first() }}</p>
-            @endif
-
             <form method="POST" action="{{ route('checkout.confirm', $order->order_number) }}"
                   enctype="multipart/form-data" style="max-width:400px; margin:0 auto;">
                 @csrf
@@ -38,44 +41,71 @@
                        style="width:100%; padding:12px; margin-bottom:12px; border:2px dashed #cbd5e1; border-radius:12px; background:#f8fafc;">
                 <img id="proof-preview" alt="Preview bukti"
                      style="display:none; max-width:100%; max-height:260px; margin:0 auto 12px; border-radius:12px;">
-                <button type="submit" class="btn-primary-nav" style="width:100%;">
-                    Konfirmasi Sudah Bayar
-                </button>
+                <button type="submit" class="btn-primary-nav" style="width:100%;">Konfirmasi Sudah Bayar</button>
             </form>
 
-            <script>
-                document.getElementById('proof').addEventListener('change', function (e) {
-                    const file = e.target.files[0];
-                    const img = document.getElementById('proof-preview');
-                    if (file) {
-                        img.src = URL.createObjectURL(file);
-                        img.style.display = 'block';
-                    }
-                });
-            </script>
         @elseif($order->status === 'menunggu_verifikasi')
             <div class="alert-success text-center" style="max-width:500px; margin:20px auto;">
-                Bukti pembayaran kamu sudah terkirim dan sedang diverifikasi oleh admin.
+                Bukti terkirim dan sedang diverifikasi admin. Halaman ini otomatis diperbarui.
                 @if($order->payment_proof)
-                    <br>
-                    <img src="{{ asset('storage/' . $order->payment_proof) }}" alt="Bukti pembayaran"
-                         style="max-width:200px; margin-top:10px; border-radius:10px;">
+                    <br><img src="{{ asset('storage/' . $order->payment_proof) }}" alt="Bukti pembayaran"
+                             style="max-width:200px; margin-top:10px; border-radius:10px;">
                 @endif
             </div>
+
         @elseif($order->status === 'selesai')
             <div class="alert-success text-center" style="max-width:500px; margin:20px auto;">
-                Pembayaran sudah dikonfirmasi. Terima kasih!
+                Pembayaran dikonfirmasi. Terima kasih!<br>
+                Status pesanan:
+                <strong>
+                    {{ match($order->fulfillment_status) {
+                        'dikirim' => 'Dikirim / siap diambil',
+                        'selesai' => 'Selesai',
+                        default   => 'Sedang dikemas',
+                    } }}
+                </strong>
             </div>
+
         @elseif($order->status === 'kadaluarsa')
             <div class="alert-error text-center" style="max-width:500px; margin:20px auto;">
-                Batas waktu pembayaran sudah habis. Silakan lakukan pemesanan ulang.
+                Waktu pembayaran habis dan pesanan dibatalkan. Silakan belanja dan checkout ulang dari awal.
             </div>
         @endif
 
         <div class="text-center" style="margin-top:20px;">
             <a href="{{ route('katalog') }}" class="btn-outline-nav">
-                🛒 Lanjut Belanja
+                🛒 {{ $order->status === 'kadaluarsa' ? 'Belanja Ulang' : 'Lanjut Belanja' }}
             </a>
         </div>
     </div>
+
+    <script>
+        const proof = document.getElementById('proof');
+        if (proof) {
+            proof.addEventListener('change', function (e) {
+                const f = e.target.files[0], img = document.getElementById('proof-preview');
+                if (f) { img.src = URL.createObjectURL(f); img.style.display = 'block'; }
+            });
+        }
+
+        @if(in_array($order->status, ['pending', 'menunggu_verifikasi']) && $order->payment_deadline)
+            const cd = document.getElementById('countdown');
+            const end = new Date('{{ $order->payment_deadline->toIso8601String() }}').getTime();
+            function tick() {
+                const left = Math.floor((end - Date.now()) / 1000);
+                if (left <= 0) {
+                    cd.textContent = '00:00';
+                    setTimeout(() => location.reload(), 1500);
+                    return;
+                }
+                cd.textContent = String(Math.floor(left / 60)).padStart(2, '0') + ':' + String(left % 60).padStart(2, '0');
+                setTimeout(tick, 1000);
+            }
+            tick();
+        @endif
+
+        @if($order->status === 'menunggu_verifikasi')
+            setTimeout(() => location.reload(), 20000);
+        @endif
+    </script>
 @endsection
