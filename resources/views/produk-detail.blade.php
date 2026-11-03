@@ -27,6 +27,9 @@
             {{-- DETAIL PRODUK --}}
             <div>
                 <span class="section-label">{{ $product->category->name ?? '-' }}</span>
+                @if(in_array($product->id, $bestSellerIds))
+                    <span style="display:inline-block; background:#fef3c7; color:#92400e; font-size:12px; font-weight:700; padding:4px 12px; border-radius:999px; margin-left:8px;">🔥 Terlaris</span>
+                @endif
                 <h1 style="margin:8px 0;">{{ $product->name }}</h1>
                 <p style="color:#666;">SKU: {{ $product->sku }}</p>
                 <p style="color:#666;">{{ $product->unit ?? '-' }}</p>
@@ -66,6 +69,9 @@
                                     @endif
                                 </div>
                                 <div class="product-info">
+                                    @if(in_array($related->id, $bestSellerIds))
+                                        <span style="display:inline-block; background:#fef3c7; color:#92400e; font-size:11px; font-weight:700; padding:3px 10px; border-radius:999px; margin-bottom:6px;">🔥 Terlaris</span>
+                                    @endif
                                     <h4>{{ $related->name }}</h4>
                                     <span class="product-price">{{ $related->formatted_price }}</span>
                                 </div>

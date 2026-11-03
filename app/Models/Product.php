@@ -7,7 +7,8 @@ use Illuminate\Database\Eloquent\Model;
 class Product extends Model
 {
     protected $fillable = [
-        'category_id', 'name', 'sku', 'image', 'price', 'unit', 'stock', 'created_by'
+        'category_id', 'name', 'sku', 'image', 'price', 'unit', 'stock', 'created_by',
+        'cost_price', 'min_stock',
     ];
 
     public function category()
@@ -20,7 +21,7 @@ class Product extends Model
         return $this->belongsTo(User::class, 'created_by');
     }
 
-    // Status otomatis dari stock (yang kita bahas sebelumnya)
+    // Status otomatis dari stock
     public function getStatusAttribute()
     {
         if ($this->stock <= 0) return 'Stok Habis';
@@ -28,7 +29,7 @@ class Product extends Model
         return 'Tersedia';
     }
 
-    // Bonus: biar gampang format harga "Rp45.000" di Blade
+    // Format harga "Rp45.000" di Blade
     public function getFormattedPriceAttribute()
     {
         return 'Rp' . number_format($this->price, 0, ',', '.');

@@ -11,93 +11,111 @@ use App\Http\Controllers\CheckoutController;
 use App\Http\Controllers\Admin\SuppliersController;
 use App\Http\Controllers\Admin\InventoryController;
 use App\Http\Controllers\Admin\PaymentVerificationController;
+use App\Http\Controllers\Admin\InsightController;
 use App\Http\Controllers\ReviewController;
 use App\Http\Controllers\LocationController;
 use App\Http\Controllers\ContactController;
-// Aktifkan baris ini HANYA setelah InsightController dibuat (fitur AI):
-// use App\Http\Controllers\Admin\InsightController;
 
-/*
-|--------------------------------------------------------------------------
-| Web Routes
-|--------------------------------------------------------------------------
-*/
+/* WEB CUSTOMER */
+$shopRoutes = function () {
+    Route::get('/', [HomeController::class, 'index'])->name('home');
 
-Route::get('/', [HomeController::class, 'index'])->name('home');
+    Route::get('/katalog', [ProductCatalogController::class, 'index'])->name('katalog');
+    Route::get('/produk/{product}', [ProductCatalogController::class, 'show'])->name('produk.show');
 
-Route::get('/katalog', [ProductCatalogController::class, 'index'])->name('katalog');
-Route::get('/produk/{product}', [ProductCatalogController::class, 'show'])->name('produk.show');
+    Route::get('/keranjang', [CartController::class, 'index'])->name('cart.index');
+    Route::post('/keranjang/{product}/tambah', [CartController::class, 'add'])->name('cart.add');
+    Route::patch('/keranjang/{product}/update', [CartController::class, 'update'])->name('cart.update');
+    Route::delete('/keranjang/{product}/hapus', [CartController::class, 'remove'])->name('cart.remove');
 
-Route::get('/keranjang', [CartController::class, 'index'])->name('cart.index');
-Route::post('/keranjang/{product}/tambah', [CartController::class, 'add'])->name('cart.add');
-Route::patch('/keranjang/{product}/update', [CartController::class, 'update'])->name('cart.update');
-Route::delete('/keranjang/{product}/hapus', [CartController::class, 'remove'])->name('cart.remove');
+    Route::get('/checkout', [CheckoutController::class, 'index'])->name('checkout.index');
+    Route::post('/checkout', [CheckoutController::class, 'store'])->name('checkout.store');
+    Route::get('/checkout/qris/{orderNumber}', [CheckoutController::class, 'qris'])->name('checkout.qris');
+    Route::post('/checkout/qris/{orderNumber}/confirm', [CheckoutController::class, 'confirmPayment'])->name('checkout.confirm');
+    Route::get('/checkout/success/{orderNumber}', [CheckoutController::class, 'success'])->name('checkout.success');
 
-Route::get('/checkout', [CheckoutController::class, 'index'])->name('checkout.index');
-Route::post('/checkout', [CheckoutController::class, 'store'])->name('checkout.store');
-Route::get('/checkout/qris/{orderNumber}', [CheckoutController::class, 'qris'])->name('checkout.qris');
-Route::post('/checkout/qris/{orderNumber}/confirm', [CheckoutController::class, 'confirmPayment'])->name('checkout.confirm');
-Route::get('/checkout/success/{orderNumber}', [CheckoutController::class, 'success'])->name('checkout.success');
+    Route::get('/ulasan', [ReviewController::class, 'index'])->name('ulasan');
+    Route::post('/ulasan', [ReviewController::class, 'store'])->name('ulasan.store');
 
-Route::get('/ulasan', [ReviewController::class, 'index'])->name('ulasan');
-Route::post('/ulasan', [ReviewController::class, 'store'])->name('ulasan.store');
+    Route::get('/lokasi', [LocationController::class, 'index'])->name('lokasi');
 
-Route::get('/lokasi', [LocationController::class, 'index'])->name('lokasi');
+    Route::get('/kontak', [ContactController::class, 'index'])->name('kontak');
+    Route::post('/kontak', [ContactController::class, 'store'])->name('kontak.store');
 
-Route::get('/kontak', [ContactController::class, 'index'])->name('kontak');
-Route::post('/kontak', [ContactController::class, 'store'])->name('kontak.store');
+    Route::view('/keunggulan', 'keunggulan')->name('keunggulan');
+};
 
-Route::view('/keunggulan', 'keunggulan')->name('keunggulan');
+/* ADMIN */
+$adminRoutes = function (bool $adminOnly) {
+    if ($adminOnly) {
+        Route::redirect('/', '/login')->name('admin.root');
+    }
 
-Route::get('/dashboard', function () {
-    return view('dashboard');
-})->middleware(['auth', 'verified'])->name('dashboard');
+    Route::view('/dashboard', 'dashboard')
+        ->middleware(['auth', 'verified'])
+        ->name('dashboard');
 
-Route::middleware('auth')->group(function () {
-    Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
-    Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
-    Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
-});
-
-Route::middleware(['auth', 'role:admin,kasir'])
-    ->prefix('admin')
-    ->name('admin.')
-    ->group(function () {
-        Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
-        Route::get('/products', [ProductController::class, 'index'])->name('products.index');
-        Route::get('/products/create', [ProductController::class, 'create'])->name('products.create');
-        Route::post('/products', [ProductController::class, 'store'])->name('products.store');
-        Route::get('/products/{product}/edit', [ProductController::class, 'edit'])->name('products.edit');
-        Route::put('/products/{product}', [ProductController::class, 'update'])->name('products.update');
-        Route::delete('/products/{product}', [ProductController::class, 'destroy'])->name('products.destroy');
-
-        Route::get('/inventory', [InventoryController::class, 'index'])->name('inventory.index');
-        Route::post('/inventory/{product}/adjust', [InventoryController::class, 'adjust'])->name('inventory.adjust');
-
-        Route::get('/suppliers', [SuppliersController::class, 'index'])->name('suppliers.index');
-        Route::get('/suppliers/create', [SuppliersController::class, 'create'])->name('suppliers.create');
-        Route::post('/suppliers', [SuppliersController::class, 'store'])->name('suppliers.store');
-        Route::get('/suppliers/{supplier}/edit', [SuppliersController::class, 'edit'])->name('suppliers.edit');
-        Route::put('/suppliers/{supplier}', [SuppliersController::class, 'update'])->name('suppliers.update');
-        Route::delete('/suppliers/{supplier}', [SuppliersController::class, 'destroy'])->name('suppliers.destroy');
-
-        // Verifikasi pembayaran & packing
-        Route::get('/payments', [PaymentVerificationController::class, 'index'])->name('payments.index');
-        Route::post('/payments/{order}/confirm', [PaymentVerificationController::class, 'confirm'])->name('payments.confirm');
-        Route::post('/payments/{order}/reject', [PaymentVerificationController::class, 'reject'])->name('payments.reject');
-        Route::post('/payments/{order}/fulfillment', [PaymentVerificationController::class, 'fulfillment'])->name('payments.fulfillment');
-        Route::post('/payments/{order}/accept-cod', [PaymentVerificationController::class, 'acceptCod'])->name('payments.acceptCod');
-        Route::post('/payments/{order}/reject-cod', [PaymentVerificationController::class, 'rejectCod'])->name('payments.rejectCod');
+    Route::middleware('auth')->group(function () {
+        Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
+        Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
+        Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
     });
 
-// Analisis AI (khusus admin). Aktifkan setelah InsightController dibuat
-// dan baris "use" InsightController di atas dibuka komentarnya.
-// Route::middleware(['auth', 'role:admin'])
-//     ->prefix('admin')
-//     ->name('admin.')
-//     ->group(function () {
-//         Route::get('/insights', [InsightController::class, 'index'])->name('insights.index');
-//         Route::post('/insights/ai-summary', [InsightController::class, 'aiSummary'])->name('insights.ai');
-//     });
+    Route::middleware(['auth', 'role:admin,kasir'])
+        ->prefix('admin')
+        ->name('admin.')
+        ->group(function () {
+            Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
-require __DIR__.'/auth.php';
+            Route::get('/products', [ProductController::class, 'index'])->name('products.index');
+            Route::get('/products/create', [ProductController::class, 'create'])->name('products.create');
+            Route::post('/products', [ProductController::class, 'store'])->name('products.store');
+            Route::get('/products/{product}/edit', [ProductController::class, 'edit'])->name('products.edit');
+            Route::put('/products/{product}', [ProductController::class, 'update'])->name('products.update');
+            Route::delete('/products/{product}', [ProductController::class, 'destroy'])->name('products.destroy');
+
+            Route::get('/inventory', [InventoryController::class, 'index'])->name('inventory.index');
+            Route::post('/inventory/{product}/adjust', [InventoryController::class, 'adjust'])->name('inventory.adjust');
+
+            Route::get('/suppliers', [SuppliersController::class, 'index'])->name('suppliers.index');
+            Route::get('/suppliers/create', [SuppliersController::class, 'create'])->name('suppliers.create');
+            Route::post('/suppliers', [SuppliersController::class, 'store'])->name('suppliers.store');
+            Route::get('/suppliers/{supplier}/edit', [SuppliersController::class, 'edit'])->name('suppliers.edit');
+            Route::put('/suppliers/{supplier}', [SuppliersController::class, 'update'])->name('suppliers.update');
+            Route::delete('/suppliers/{supplier}', [SuppliersController::class, 'destroy'])->name('suppliers.destroy');
+
+            Route::get('/payments', [PaymentVerificationController::class, 'index'])->name('payments.index');
+            Route::post('/payments/{order}/confirm', [PaymentVerificationController::class, 'confirm'])->name('payments.confirm');
+            Route::post('/payments/{order}/reject', [PaymentVerificationController::class, 'reject'])->name('payments.reject');
+            Route::post('/payments/{order}/fulfillment', [PaymentVerificationController::class, 'fulfillment'])->name('payments.fulfillment');
+            Route::post('/payments/{order}/accept-cod', [PaymentVerificationController::class, 'acceptCod'])->name('payments.acceptCod');
+            Route::post('/payments/{order}/reject-cod', [PaymentVerificationController::class, 'rejectCod'])->name('payments.rejectCod');
+        });
+
+    Route::middleware(['auth', 'role:admin'])
+        ->prefix('admin')
+        ->name('admin.')
+        ->group(function () {
+            Route::get('/insights', [InsightController::class, 'index'])->name('insights.index');
+            Route::post('/insights/ai-summary', [InsightController::class, 'aiSummary'])->name('insights.ai');
+        });
+
+    require __DIR__ . '/auth.php';
+};
+
+/* PEMILIHAN MODE */
+$mode        = config('app.mode', 'all');
+$shopDomain  = config('app.shop_domain');
+$adminDomain = config('app.admin_domain');
+
+if ($mode === 'shop') {
+    $shopRoutes();
+} elseif ($mode === 'admin') {
+    $adminRoutes(true);
+} elseif ($shopDomain && $adminDomain) {
+    Route::domain($shopDomain)->group($shopRoutes);
+    Route::domain($adminDomain)->group(fn () => $adminRoutes(true));
+} else {
+    $shopRoutes();
+    $adminRoutes(false);
+}

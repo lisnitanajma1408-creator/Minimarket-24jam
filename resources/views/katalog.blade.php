@@ -52,6 +52,9 @@
                             </div>
                         </a>
                         <div class="product-info">
+                            @if(in_array($product->id, $bestSellerIds))
+                                <span style="display:inline-block; background:#fef3c7; color:#92400e; font-size:11px; font-weight:700; padding:3px 10px; border-radius:999px; margin-bottom:6px;">🔥 Terlaris</span>
+                            @endif
                             <a href="{{ route('produk.show', $product) }}" style="text-decoration:none; color:inherit;">
                                 <h4>{{ $product->name }}</h4>
                             </a>

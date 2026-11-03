@@ -51,7 +51,12 @@ class ProductController extends Controller
             'unit' => 'nullable|string|max:100',
             'stock' => 'required|integer|min:0',
             'image' => 'nullable|image|max:2048',
+            'cost_price' => 'nullable|numeric|min:0',   // <-- TAMBAH
+            'min_stock' => 'nullable|integer|min:0',    // <-- TAMBAH
         ]);
+
+        $validated['cost_price'] = $validated['cost_price'] ?? 0;   // <-- TAMBAH
+        $validated['min_stock'] = $validated['min_stock'] ?? 15;    // <-- TAMBAH
 
         if ($request->hasFile('image')) {
             $validated['image'] = $request->file('image')->store('products', 'public');
@@ -81,7 +86,12 @@ class ProductController extends Controller
             'unit' => 'nullable|string|max:100',
             'stock' => 'required|integer|min:0',
             'image' => 'nullable|image|max:2048',
+            'cost_price' => 'nullable|numeric|min:0',   // <-- TAMBAH
+            'min_stock' => 'nullable|integer|min:0',    // <-- TAMBAH
         ]);
+
+        $validated['cost_price'] = $validated['cost_price'] ?? 0;   // <-- TAMBAH
+        $validated['min_stock'] = $validated['min_stock'] ?? 15;    // <-- TAMBAH
 
         if ($request->hasFile('image')) {
             $validated['image'] = $request->file('image')->store('products', 'public');

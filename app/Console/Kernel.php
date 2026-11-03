@@ -12,7 +12,8 @@ class Kernel extends ConsoleKernel
      */
     protected function schedule(Schedule $schedule): void
     {
-        $schedule->command('orders:expire')->everyMinute();
+    $schedule->command('orders:expire')->everyMinute();
+    $schedule->command('insight:generate')->hourly();
     }
 
     /**
