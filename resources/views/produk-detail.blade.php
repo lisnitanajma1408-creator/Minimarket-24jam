@@ -69,7 +69,7 @@
                                     @endif
                                 </div>
                                 <div class="product-info">
-                                    @if(in_array($related->id, $bestSellerIds))
+                                    @if(in_array($product->id, $bestSellerIds ?? []))
                                         <span style="display:inline-block; background:#fef3c7; color:#92400e; font-size:11px; font-weight:700; padding:3px 10px; border-radius:999px; margin-bottom:6px;">🔥 Terlaris</span>
                                     @endif
                                     <h4>{{ $related->name }}</h4>

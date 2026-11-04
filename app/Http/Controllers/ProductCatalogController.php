@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Product;
 use App\Models\Category;
+use App\Services\SalesAnalyticsService;
 use Illuminate\Http\Request;
 
 class ProductCatalogController extends Controller
@@ -30,7 +31,9 @@ class ProductCatalogController extends Controller
             ? Category::where('slug', $request->kategori)->first()
             : null;
 
-        return view('katalog', compact('products', 'categories', 'activeCategory'));
+        $bestSellerIds = app(SalesAnalyticsService::class)->bestSellerIds(30, 5);
+
+        return view('katalog', compact('products', 'categories', 'activeCategory', 'bestSellerIds'));
     }
 
     public function show(Product $product)
@@ -40,6 +43,8 @@ class ProductCatalogController extends Controller
             ->take(4)
             ->get();
 
-        return view('produk-detail', compact('product', 'relatedProducts'));
+        $bestSellerIds = app(SalesAnalyticsService::class)->bestSellerIds(30, 5);
+
+        return view('produk-detail', compact('product', 'relatedProducts', 'bestSellerIds'));
     }
 }
