@@ -1,138 +1,169 @@
 @extends('layouts.admin')
 
-@section('title', 'Analisis Penjualan')
+@section('title', 'Verifikasi Pembayaran')
 
 @section('content')
     <div class="page-header">
         <div>
-            <h2>Analisis Penjualan & Stok</h2>
-            <p class="page-subtitle">Dihitung otomatis dari pesanan yang sudah dikonfirmasi admin.</p>
-        </div>
-        <div style="display:flex; gap:8px;">
-            @foreach([7 => '7 Hari', 30 => '30 Hari', 90 => '90 Hari'] as $d => $label)
-                <a href="{{ route('admin.insights.index', ['days' => $d]) }}"
-                   class="{{ $days == $d ? 'btn-primary' : 'btn-outline' }}"
-                   style="text-decoration:none; display:inline-block;">{{ $label }}</a>
-            @endforeach
+            <h2>Verifikasi Pembayaran & Packing</h2>
+            <p class="page-subtitle">Cocokkan bukti dengan mutasi rekening/e-wallet toko. Pesanan QRIS yang belum upload bukti dalam 30 menit otomatis hangus ({{ $expiredCount }} pesanan sejauh ini).</p>
         </div>
     </div>
 
-    <div class="stat-cards">
-        <div class="stat-card"><div class="stat-label">Pendapatan</div>
-            <div class="stat-value" style="font-size:22px;">Rp {{ number_format($totals['revenue'], 0, ',', '.') }}</div></div>
-        <div class="stat-card"><div class="stat-label">Estimasi Laba</div>
-            <div class="stat-value" style="font-size:22px;">Rp {{ number_format($totals['profit'], 0, ',', '.') }}</div></div>
-        <div class="stat-card"><div class="stat-label">Unit Terjual</div>
-            <div class="stat-value">{{ number_format($totals['units'], 0, ',', '.') }}</div></div>
-        <div class="stat-card"><div class="stat-label">Jumlah Pesanan</div>
-            <div class="stat-value">{{ number_format($totals['orders'], 0, ',', '.') }}</div></div>
-    </div>
+    @if(session('success'))<div class="alert-success" style="margin-bottom:16px;">{{ session('success') }}</div>@endif
+    @if(session('error'))<div class="alert-error" style="margin-bottom:16px;">{{ session('error') }}</div>@endif
 
+    {{-- PESANAN COD BARU --}}
     <div class="panel" style="margin-bottom:18px;">
-        <h3>📊 Ringkasan Otomatis</h3>
-        <div style="white-space:pre-wrap; line-height:1.7; color:#374151;">{{ $ruleSummary['text'] }}</div>
-    </div>
-
-    <div class="panel" style="margin-bottom:18px;">
-        <h3>🔥 Produk Terlaris ({{ $days }} hari terakhir)</h3>
+        <h3>💵 Pesanan COD Baru ({{ $codPending->count() }})</h3>
         <table class="product-table">
-            <thead><tr><th>#</th><th>Produk</th><th>Terjual</th><th>Pesanan</th><th>Pendapatan</th><th>Est. Laba</th><th>Margin</th></tr></thead>
+            <thead>
+                <tr><th>Pesanan</th><th>Pembeli</th><th>Barang</th><th>Total Ditagih</th><th>Pengiriman</th><th>Aksi</th></tr>
+            </thead>
             <tbody>
-                @forelse($bestSellers as $i => $row)
+                @forelse($codPending as $o)
                     <tr>
-                        <td>{{ $i + 1 }}</td>
-                        <td>{{ $row->product_name }}</td>
-                        <td>{{ number_format($row->total_qty, 0, ',', '.') }}</td>
-                        <td>{{ $row->order_count }}</td>
-                        <td>Rp {{ number_format($row->revenue, 0, ',', '.') }}</td>
-                        <td>Rp {{ number_format($row->profit, 0, ',', '.') }}</td>
-                        <td><span class="badge badge-success">{{ $row->revenue > 0 ? round($row->profit / $row->revenue * 100) : 0 }}%</span></td>
+                        <td><strong>{{ $o->order_number }}</strong><br><small>{{ $o->created_at->diffForHumans() }}</small></td>
+                        <td>{{ $o->customer_name }}<br><small>{{ $o->address_detail }}</small></td>
+                        <td>@foreach($o->items as $i){{ $i->qty }}x {{ $i->product_name }}<br>@endforeach</td>
+                        <td><strong>Rp {{ number_format($o->total, 0, ',', '.') }}</strong></td>
+                        <td>{{ $o->shipping_method === 'ambil_toko' ? 'Ambil di toko' : 'Ojek online' }}</td>
+                        <td>
+                            <form action="{{ route('admin.payments.acceptCod', $o->id) }}" method="POST" style="display:inline;">
+                                @csrf
+                                <button class="btn-primary" onclick="return confirm('Terima pesanan COD ini?')">Terima Pesanan</button>
+                            </form>
+                            <form action="{{ route('admin.payments.rejectCod', $o->id) }}" method="POST" style="display:inline;">
+                                @csrf
+                                <button class="btn-outline" onclick="return confirm('Tolak pesanan ini?')">Tolak</button>
+                            </form>
+                        </td>
                     </tr>
                 @empty
-                    <tr><td colspan="7" class="text-center">Belum ada penjualan. Pesanan dihitung setelah admin menekan "Sudah Bayar" atau "Terima Pesanan".</td></tr>
+                    <tr><td colspan="6" class="text-center">Tidak ada pesanan COD baru.</td></tr>
                 @endforelse
             </tbody>
         </table>
     </div>
 
+    {{-- MENUNGGU VERIFIKASI (QRIS) --}}
     <div class="panel" style="margin-bottom:18px;">
-        <h3>⚠️ Stok Menipis / Habis (perlu restok)</h3>
+        <h3>⏳ Menunggu Verifikasi ({{ $pending->count() }})</h3>
         <table class="product-table">
-            <thead><tr><th>Produk</th><th>Kategori</th><th>Stok</th><th>Batas Min.</th><th>Rata-rata/Hari</th><th>Perkiraan Habis</th><th>Saran Restok</th><th>Status</th></tr></thead>
+            <thead>
+                <tr><th>Pesanan</th><th>Pembeli</th><th>Barang</th><th>Total</th><th>Bukti</th><th>Batas Waktu</th><th>Aksi</th></tr>
+            </thead>
             <tbody>
-                @forelse($lowStock as $p)
+                @forelse($pending as $o)
                     <tr>
-                        <td>{{ $p->name }}</td>
-                        <td>{{ $p->category->name ?? '-' }}</td>
-                        <td>{{ $p->stock }}</td>
-                        <td>{{ $p->min_stock }}</td>
-                        <td>{{ $p->avg_daily }}</td>
-                        <td>{{ is_null($p->days_left) ? 'Belum ada data penjualan' : $p->days_left . ' hari' }}</td>
-                        <td><strong>+{{ $p->suggested_restock }}</strong></td>
-                        <td><span class="badge {{ $p->urgency === 'kritis' ? 'badge-danger' : 'badge-warning' }}">
-                            {{ $p->stock <= 0 ? 'Habis' : ($p->urgency === 'kritis' ? 'Kritis' : 'Rendah') }}</span></td>
+                        <td><strong>{{ $o->order_number }}</strong></td>
+                        <td>{{ $o->customer_name }}<br><small>{{ $o->address_detail }}</small></td>
+                        <td>@foreach($o->items as $i){{ $i->qty }}x {{ $i->product_name }}<br>@endforeach</td>
+                        <td>Rp {{ number_format($o->total, 0, ',', '.') }}</td>
+                        <td>
+                            @if($o->payment_proof)
+                                <a href="{{ asset('storage/' . $o->payment_proof) }}" target="_blank">
+                                    <img src="{{ asset('storage/' . $o->payment_proof) }}" alt="Bukti"
+                                         style="width:80px; height:80px; object-fit:cover; border-radius:8px;">
+                                </a>
+                            @else - @endif
+                        </td>
+                        <td>
+                            @if($o->payment_deadline)
+                                <strong class="js-countdown" data-end="{{ $o->payment_deadline->toIso8601String() }}" style="color:#b45309;">--:--</strong>
+                            @else - @endif
+                        </td>
+                        <td>
+                            <form action="{{ route('admin.payments.confirm', $o->id) }}" method="POST" style="display:inline;">
+                                @csrf
+                                <button class="btn-primary" onclick="return confirm('Yakin uang sudah masuk?')">Sudah Bayar</button>
+                            </form>
+                            <form action="{{ route('admin.payments.reject', $o->id) }}" method="POST" style="display:inline;">
+                                @csrf
+                                <button class="btn-outline" onclick="return confirm('Tolak bukti ini?')">Tolak</button>
+                            </form>
+                        </td>
                     </tr>
                 @empty
-                    <tr><td colspan="8" class="text-center">Semua stok masih aman 🎉</td></tr>
+                    <tr><td colspan="7" class="text-center">Tidak ada pembayaran yang menunggu verifikasi.</td></tr>
                 @endforelse
             </tbody>
         </table>
     </div>
 
+    {{-- PACKING & DISTRIBUSI --}}
+    <div class="panel" style="margin-bottom:18px;">
+        <h3>📦 Packing & Distribusi ({{ $packing->count() }})</h3>
+        <table class="product-table">
+            <thead><tr><th>Pesanan</th><th>Pembeli</th><th>Barang</th><th>Pengiriman</th><th>Status</th><th>Aksi</th></tr></thead>
+            <tbody>
+                @forelse($packing as $o)
+                    <tr>
+                        <td><strong>{{ $o->order_number }}</strong></td>
+                        <td>{{ $o->customer_name }}<br><small>{{ $o->address_detail }}</small></td>
+                        <td>@foreach($o->items as $i){{ $i->qty }}x {{ $i->product_name }}<br>@endforeach</td>
+                        <td>
+                            {{ $o->shipping_method === 'ambil_toko' ? 'Ambil di toko' : 'Ojek online' }}<br>
+                            @if($o->payment_method === 'cod')
+                                <span class="badge badge-warning">COD: tagih Rp {{ number_format($o->total, 0, ',', '.') }}</span>
+                            @else
+                                <span class="badge badge-success">QRIS lunas</span>
+                            @endif
+                        </td>
+                        <td>
+                            <span class="badge {{ $o->fulfillment_status === 'dikirim' ? 'badge-success' : 'badge-warning' }}">
+                                {{ $o->fulfillment_status === 'dikirim' ? 'Dikirim / siap diambil' : 'Dikemas' }}
+                            </span>
+                        </td>
+                        <td>
+                            <form action="{{ route('admin.payments.fulfillment', $o->id) }}" method="POST">
+                                @csrf
+                                <button class="btn-primary">
+                                    {{ $o->fulfillment_status === 'dikirim' ? 'Tandai Selesai' : 'Tandai Dikirim / Siap Diambil' }}
+                                </button>
+                            </form>
+                        </td>
+                    </tr>
+                @empty
+                    <tr><td colspan="6" class="text-center">Tidak ada pesanan yang perlu dikemas.</td></tr>
+                @endforelse
+            </tbody>
+        </table>
+    </div>
+
+    {{-- SELESAI --}}
     <div class="panel">
-        <h3>🤖 Analisis & Rekomendasi AI</h3>
-
-        @if($aiEnabled)
-            <p class="page-subtitle" style="margin-bottom:10px;">
-                Diperbarui otomatis tiap beberapa jam. Terakhir:
-                <strong id="ai-time">{{ $aiCached ? \Carbon\Carbon::parse($aiCached['at'])->timezone(config('app.timezone'))->format('d M Y H:i') : 'belum ada' }}</strong>
-                <button type="button" id="btn-ai" class="btn-outline" style="margin-left:10px;">Perbarui sekarang</button>
-            </p>
-            <div id="ai-result" style="white-space:pre-wrap; line-height:1.7; color:#374151;">{{ $aiCached['text'] ?? 'Menyusun analisis...' }}</div>
-
-            <script>
-                const btn = document.getElementById('btn-ai');
-                const out = document.getElementById('ai-result');
-                const timeEl = document.getElementById('ai-time');
-
-                async function loadAi() {
-                    btn.disabled = true;
-                    btn.textContent = 'Menganalisis...';
-                    try {
-                        const res = await fetch('{{ route('admin.insights.ai') }}', {
-                            method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json',
-                                'Accept': 'application/json',
-                                'X-CSRF-TOKEN': '{{ csrf_token() }}'
-                            },
-                            body: JSON.stringify({ days: {{ $days }} })
-                        });
-                        const data = await res.json();
-                        if (res.ok) {
-                            out.textContent = data.summary;
-                            timeEl.textContent = data.at;
-                        } else {
-                            out.textContent = data.error || 'Terjadi kesalahan.';
-                        }
-                    } catch (e) {
-                        out.textContent = 'Tidak bisa terhubung ke server.';
-                    }
-                    btn.disabled = false;
-                    btn.textContent = 'Perbarui sekarang';
-                }
-
-                btn.addEventListener('click', loadAi);
-
-                @if($aiStale)
-                    loadAi();
-                @endif
-            </script>
-        @else
-            <div class="alert-error" style="margin-bottom:0;">
-                Analisis Claude belum aktif. Isi <code>ANTHROPIC_API_KEY</code> di <code>.env</code>, lalu jalankan <code>php artisan config:clear</code>.
-                Ringkasan otomatis di atas tetap berjalan tanpa API.
-            </div>
-        @endif
+        <h3>✅ Selesai (terakhir)</h3>
+        <table class="product-table">
+            <thead><tr><th>Pesanan</th><th>Pembeli</th><th>Total</th><th>Dibayar</th></tr></thead>
+            <tbody>
+                @forelse($done as $o)
+                    <tr>
+                        <td>{{ $o->order_number }}</td>
+                        <td>{{ $o->customer_name }}</td>
+                        <td>Rp {{ number_format($o->total, 0, ',', '.') }}</td>
+                        <td>{{ optional($o->paid_at)->format('d M Y H:i') }}</td>
+                    </tr>
+                @empty
+                    <tr><td colspan="4" class="text-center">Belum ada.</td></tr>
+                @endforelse
+            </tbody>
+        </table>
     </div>
+
+    <script>
+        function tickAll() {
+            document.querySelectorAll('.js-countdown').forEach(el => {
+                const left = Math.floor((new Date(el.dataset.end).getTime() - Date.now()) / 1000);
+                if (left <= 0) {
+                    el.textContent = 'Lewat batas';
+                    el.style.color = '#b91c1c';
+                    return;
+                }
+                el.textContent = String(Math.floor(left / 60)).padStart(2, '0') + ':' + String(left % 60).padStart(2, '0');
+            });
+            setTimeout(tickAll, 1000);
+        }
+        tickAll();
+    </script>
 @endsection

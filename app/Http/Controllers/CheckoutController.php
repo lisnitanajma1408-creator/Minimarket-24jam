@@ -30,11 +30,7 @@ class CheckoutController extends Controller
             $product = Product::find($productId);
             if ($product) {
                 $itemSubtotal = $product->price * $qty;
-                $items[] = [
-                    'product' => $product,
-                    'qty' => $qty,
-                    'subtotal' => $itemSubtotal,
-                ];
+                $items[] = ['product' => $product, 'qty' => $qty, 'subtotal' => $itemSubtotal];
                 $subtotal += $itemSubtotal;
             }
         }
@@ -81,10 +77,8 @@ class CheckoutController extends Controller
         $shippingCost = 0;
         $total = $subtotal + $shippingCost;
 
-        $orderNumber = 'FM-' . date('Y') . '-' . str_pad(StoreOrder::count() + 1, 5, '0', STR_PAD_LEFT);
-
         $order = StoreOrder::create([
-            'order_number' => $orderNumber,
+            'order_number' => 'TMP-' . uniqid(),
             'customer_name' => $validated['customer_name'],
             'customer_email' => $validated['customer_email'],
             'address_detail' => $validated['address_detail'],
@@ -99,6 +93,10 @@ class CheckoutController extends Controller
             'send_receipt_email' => $request->has('send_receipt_email'),
         ]);
 
+        $order->update([
+            'order_number' => 'FM-' . date('Y') . '-' . str_pad($order->id, 5, '0', STR_PAD_LEFT),
+        ]);
+
         foreach ($items as $item) {
             OrderItem::create([
                 'store_order_id' => $order->id,
@@ -110,10 +108,8 @@ class CheckoutController extends Controller
             ]);
         }
 
-        // Email dibungkus try/catch: kalau SMTP gagal, checkout tetap lanjut.
         try {
-            $adminEmails = User::where('role', 'admin')->pluck('email');
-            foreach ($adminEmails as $email) {
+            foreach (User::where('role', 'admin')->pluck('email') as $email) {
                 Mail::to($email)->send(new NewOrderNotification($order));
             }
         } catch (\Throwable $e) {
@@ -151,7 +147,6 @@ class CheckoutController extends Controller
 
         $order = StoreOrder::where('order_number', $orderNumber)->firstOrFail();
 
-        // Hanya pesanan "pending" (belum upload / bukti ditolak) yang boleh upload.
         if ($order->status !== 'pending') {
             return redirect()->route('checkout.qris', $order->order_number)
                 ->withErrors(['payment_proof' => 'Pesanan ini sudah kedaluwarsa atau sedang diverifikasi.']);
@@ -166,7 +161,6 @@ class CheckoutController extends Controller
             'payment_proof.max'      => 'Ukuran gambar maksimal 4 MB.',
         ]);
 
-        // Hapus bukti lama kalau customer upload ulang setelah ditolak admin.
         if ($order->payment_proof) {
             Storage::disk('public')->delete($order->payment_proof);
         }
@@ -176,17 +170,14 @@ class CheckoutController extends Controller
             'status' => 'menunggu_verifikasi',
         ]);
 
-        // Beri tahu admin bahwa bukti baru masuk.
         try {
-            $adminEmails = User::where('role', 'admin')->pluck('email');
-            foreach ($adminEmails as $email) {
+            foreach (User::where('role', 'admin')->pluck('email') as $email) {
                 Mail::to($email)->send(new NewOrderNotification($order));
             }
         } catch (\Throwable $e) {
             Log::warning('Email notifikasi admin gagal: ' . $e->getMessage());
         }
 
-        // Kembali ke halaman QRIS supaya countdown tetap terlihat.
         return redirect()->route('checkout.qris', $order->order_number)
             ->with('success', 'Bukti pembayaran terkirim. Admin akan segera memverifikasi.');
     }

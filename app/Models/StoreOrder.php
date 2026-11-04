@@ -23,12 +23,10 @@ class StoreOrder extends Model
         return $this->hasMany(OrderItem::class, 'store_order_id');
     }
 
-    /**
-     * Hanguskan pesanan yang lewat batas waktu dan belum dikonfirmasi admin.
-     */
     public static function expireOverdue(): int
     {
-        return static::whereIn('status', ['pending', 'menunggu_verifikasi'])
+        return static::where('status', 'pending')
+            ->where('payment_method', 'qris')
             ->whereNotNull('payment_deadline')
             ->where('payment_deadline', '<', now())
             ->update(['status' => 'kadaluarsa']);

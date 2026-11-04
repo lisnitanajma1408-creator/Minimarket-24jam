@@ -25,7 +25,7 @@
             <div class="alert-error text-center" style="max-width:500px; margin:20px auto;">{{ $errors->first() }}</div>
         @endif
 
-        @if(in_array($order->status, ['pending', 'menunggu_verifikasi']) && $order->payment_deadline)
+        @if($order->status === 'pending' && $order->payment_deadline)
             <div class="text-center" style="margin:16px 0;">
                 <div style="font-size:14px; color:#64748b;">Sisa waktu pembayaran</div>
                 <div id="countdown" style="font-size:38px; font-weight:800; color:#b45309; letter-spacing:2px;">--:--</div>
@@ -88,7 +88,7 @@
             });
         }
 
-        @if(in_array($order->status, ['pending', 'menunggu_verifikasi']) && $order->payment_deadline)
+        @if($order->status === 'pending' && $order->payment_deadline)
             const cd = document.getElementById('countdown');
             const end = new Date('{{ $order->payment_deadline->toIso8601String() }}').getTime();
             function tick() {

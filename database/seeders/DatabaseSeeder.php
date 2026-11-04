@@ -22,8 +22,8 @@ class DatabaseSeeder extends Seeder
 
         User::create([
             'name' => 'Admin Minimarket',
-            'email' => 'admin@minimarket24.com',
-            'password' => Hash::make('password123'),
+            'email'    => 'admin@minimarket24.com',
+            'password' => bcrypt('password123'),
             'role' => 'admin',
         ]);
     }
