@@ -32,12 +32,18 @@
                    class="{{ request()->routeIs('admin.products.*') ? 'active' : '' }}">
                     Daftar Produk
                 </a>
-                <a href="#">Inventaris</a>
-                <a href="#">Pemasok</a>
+                <a href="{{ route('admin.inventory.index') }}"
+                   class="{{ request()->routeIs('admin.inventory.*') ? 'active' : '' }}">
+                    Inventaris
+                </a>
+                <a href="{{ route('admin.suppliers.index') }}"
+                   class="{{ request()->routeIs('admin.suppliers.*') ? 'active' : '' }}">
+                    Pemasok
+                </a>
             </nav>
 
             <div class="sidebar-footer">
-                <a href="#">Pusat Bantuan</a>
+                <a href="{{ route('admin.help') }}">Pusat Bantuan</a>
                 <form method="POST" action="{{ route('logout') }}">
                     @csrf
                     <button type="submit">Keluar</button>

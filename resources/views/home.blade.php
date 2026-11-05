@@ -16,7 +16,7 @@
                 </p>
                 <div class="hero-buttons">
                     <a href="{{ route('katalog') }}" class="btn-primary-nav">Lihat Produk</a>
-                    <a href="#lokasi" class="btn-outline-nav">Lihat Lokasi</a>
+                    <a href="{{ route('lokasi') }}" class="btn-outline-nav">Lihat Lokasi</a>
                 </div>
             </div>
             <div class="hero-image-wrap">
@@ -75,52 +75,4 @@
         </div>
     </section>
 
-    {{-- KEUNGGULAN --}}
-    <section class="advantage-section" id="keunggulan">
-        <div class="site-container">
-            <h2 class="text-center">Keunggulan Kami</h2>
-            <p class="text-center section-desc">Alasan kenapa Anda harus belanja di sini.</p>
-            <div class="advantage-grid">
-                <div class="advantage-card">
-                    <h3>Buka 24 Jam</h3>
-                    <p>Siap melayani kapan pun Anda butuh, siang maupun malam.</p>
-                </div>
-                <div class="advantage-card">
-                    <h3>Produk Segar</h3>
-                    <p>Kualitas premium dengan standar kesegaran terjaga.</p>
-                </div>
-                <div class="advantage-card">
-                    <h3>Harga Bersahabat</h3>
-                    <p>Kebutuhan harian dengan harga yang ramah di kantong.</p>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    {{-- ULASAN --}}
-    <section class="review-section" id="ulasan">
-        <div class="site-container">
-            <h2 class="text-center">Apa Kata Pelanggan</h2>
-            <p class="text-center section-desc">Pengalaman belanja dari pelanggan setia kami.</p>
-            <div class="review-grid">
-                <div class="review-card">
-                    <p>"Tempatnya bersih, produk lengkap, dan buka 24 jam jadi sangat membantu!"</p>
-                    <strong>- Pelanggan Setia</strong>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    {{-- LOKASI --}}
-    <section class="location-section" id="lokasi">
-        <div class="site-container">
-            <h2 class="text-center">Lokasi Kami</h2>
-            <p class="text-center section-desc">Kunjungi toko kami atau hubungi untuk informasi lebih lanjut.</p>
-            <div class="location-info text-center">
-                <p><strong>Alamat:</strong> (isi alamat toko di sini)</p>
-                <p><strong>Telepon:</strong> (isi nomor telepon di sini)</p>
-            </div>
-        </div>
-    </section>
-
-@endsection
+    @endsection
