@@ -51,7 +51,8 @@ $adminRoutes = function (bool $adminOnly) {
         Route::redirect('/', '/login')->name('admin.root');
     }
 
-    Route::view('/dashboard', 'dashboard')
+    // Setelah login (Breeze mengarah ke "dashboard"), langsung ke Ringkasan admin
+    Route::get('/dashboard', fn () => redirect()->route('admin.dashboard'))
         ->middleware(['auth', 'verified'])
         ->name('dashboard');
 
