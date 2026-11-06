@@ -5,14 +5,16 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Services\AiInsightService;
 use App\Services\SalesAnalyticsService;
+use App\Services\ForecastService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 
 class InsightController extends Controller
 {
     public function __construct(
-        private SalesAnalyticsService $analytics,
-        private AiInsightService $ai
+    private SalesAnalyticsService $analytics,
+    private AiInsightService $ai,
+    private ForecastService $forecast
     ) {
     }
 
@@ -35,6 +37,7 @@ class InsightController extends Controller
             'aiEnabled'   => $this->ai->enabled(),
             'aiCached'    => $this->ai->cached($days),
             'aiStale'     => $this->ai->isStale($days),
+            'forecasts'   => $this->forecast->forecastAll(),
         ]);
     }
 
